@@ -22,5 +22,6 @@ npm run lint
 
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
-# -
-Vue, Spring 기반의 맛집지도
+
+# Vue를 이용하여 구성한 맛집 지도 프론트엔드
+Vue를 이용하여 구성한 맛집 지도 프론트엔드

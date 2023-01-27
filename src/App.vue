@@ -18,7 +18,7 @@ export default {
 }
 </script>
 
-<style lang = "scss">
+<style lang="scss">
 #app {
   position: absolute;
   top: 0;
