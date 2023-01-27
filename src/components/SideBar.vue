@@ -19,7 +19,10 @@
         </div>
         <div class="location-info-area">
           <FontAwesomeIcon icon="location-dot"/>
-          <BInput placeholder="위치 정보 직접 입력하기"/>
+          <BInput 
+              placeholder="위치 정보 직접 입력하기"
+              :value="address"
+          />
         </div>
         <div class="rate-area">
           <BFormRating/>
@@ -44,6 +47,7 @@
 
 <script>
 import VueResizable from 'vue-resizable';
+import eventBus from '../main.js'
 
 export default {
   name: 'SideBar',
@@ -52,14 +56,25 @@ export default {
   },
   data() {
     return {
-        isVisibleSideBar: true
+        isVisibleSideBar: true,
+        address: undefined
     }
+  },
+  created(){
+    //this.$root.$refs.sideBar = this;
+  },
+  mounted() {
+    eventBus.$on('clickMap', (data) => {
+        console.log("버스 넘어옴",data)
+        this.address = data
+    })
   },
   methods: {
     showSideBar() {
         this.isVisibleSideBar = !this.isVisibleSideBar;
     }
-  }
+  },
+
 }
 </script>
 
@@ -82,7 +97,6 @@ export default {
             padding: 20px 10px;
 
             input, input::placeholder, input:focus {
-              font-family: 'Nanum Square', serif;
               font-size: 2rem;
               font-weight: bold;
               color: #fff;

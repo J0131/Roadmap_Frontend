@@ -20,6 +20,7 @@ export default {
 
 <style lang="scss">
 #app {
+  font-family: 'Nanum Sqaure';
   position: absolute;
   top: 0;
   right: 0;
