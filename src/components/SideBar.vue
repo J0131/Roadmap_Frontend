@@ -47,7 +47,8 @@
 
 <script>
 import VueResizable from 'vue-resizable';
-import eventBus from '../main.js'
+import eventBus from '../utils/eventBus';
+//import eventBus from '../main.js';
 
 export default {
   name: 'SideBar',
@@ -64,7 +65,7 @@ export default {
     //this.$root.$refs.sideBar = this;
   },
   mounted() {
-    eventBus.$on('clickMap', (data) => {
+        eventBus.$on('clickMap', data => {
         console.log("버스 넘어옴",data)
         this.address = data
     })
@@ -74,7 +75,6 @@ export default {
         this.isVisibleSideBar = !this.isVisibleSideBar;
     }
   },
-
 }
 </script>
 

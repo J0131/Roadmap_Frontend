@@ -12,8 +12,9 @@ import OlMap from 'ol/Map.js';
 import OSM from 'ol/source/OSM';
 import {fromLonLat, toLonLat} from 'ol/proj.js';
 import {defaults} from 'ol/control.js';
-import eventBus from '../main.js'
-import { add } from 'ol/coordinate';
+import eventBus from '../utils/eventBus'
+import Geocoder from 'ol-geocoder'
+//import eventBus from '../main.js';
 
 export default {
     name : 'MainMap',
@@ -24,6 +25,7 @@ export default {
         }
     },
     mounted() {
+        
         this.olMap = new OlMap({
             target: this.$refs.map,
             controls:defaults({
@@ -42,8 +44,8 @@ export default {
             })
         })
 
-       const getaddress = async (lon, lat) => {
-            return await this.getAddress(lon,lat)
+        const getaddress = (lon, lat) => {
+            this.getAddress(lon,lat)
         }
 
         this.olMap.on('click', function(e) {
@@ -54,15 +56,30 @@ export default {
             const lat = lonLatArr[1]
             console.log(lat)
             getaddress(lon, lat)
-
-            //const address = getaddress(lon,lat).data.display_name.split(", ").reverse().join(" ");
-            //eventBus.$emit('clickMap',address)
         })
 
-        //console.log(this.getAddress(127.1388684,37.4449168))
+        // nominatim : 이름
+        // osm : 자료이름
+
+        const geocoder = new Geocoder('nominatim', {
+            provider: 'osm',
+            lang: 'kr',
+            placeholder: '주소 검색',
+            limit: 5, // 자동 완성 결과 최대 개수
+            autoComplete: true,
+            keepOpen: true
+        })
+
+        this.olMap.addControl(geocoder)
+        // olMap에 geocoder를 추가해s준다
+        // addcontrol은 openlayers에서 제공하는 메소드로, 커스텀 컨트롤을 주입하게해줌
+
+        geocoder.on('addresschosen', (evt) => {
+            that.setUiAddress(evt.address.details.name)
+        })
     },
     methods: {
-        async getAddress (lon, lat) {
+        getAddress (lon, lat) {
             axios.get(
                 'https://nominatim.openstreetmap.org/reverse',
                 {
@@ -79,13 +96,64 @@ export default {
                     console.log("axios error" + err)
                 })
         },
+        setUiAddress(str){
+            this.$root.$refs.sideBar.address = str.split(', ').reverse().join(' ')
+        }
     }
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .main-map {
     width: 100%;
     height: 100%;
+
+    ::v-deep.ol-geocoder {
+        position: absolute;
+        right: 0;
+        padding: 10px;
+
+        button {
+            display: none;
+        }
+
+        input::placeholder {
+            color: white;
+            opacity: 0.7;
+        }
+
+        input, ul {
+            border-style: none;
+            width: 200px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
+            border-color: unset;
+            padding: 0 5px;
+            color: white;
+        }
+
+        ul {
+            margin-top: 5px;
+            padding: 0;
+            list-style: none;
+
+            li:hover {
+                background-color: rgba(0, 0, 0, 0.3);
+            }
+
+            li {
+                padding: 5px 10px;
+                font-size: 13px;
+
+                a {
+                    text-decoration: none;
+
+                    .gcd-road {
+                        color: white;
+                    }
+                }
+            }
+        }
+    }
 }
 </style>
