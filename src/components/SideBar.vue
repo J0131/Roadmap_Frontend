@@ -62,7 +62,7 @@ export default {
     }
   },
   created(){
-    //this.$root.$refs.sideBar = this;
+    this.$root.$refs.sideBar = this;
   },
   mounted() {
         eventBus.$on('clickMap', data => {

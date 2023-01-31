@@ -19,6 +19,11 @@ export default {
 </script>
 
 <style lang="scss">
+@import "~bootstrap/scss/_functions";
+@import "~bootstrap/scss/_variables";
+@import "~bootstrap/scss/_mixins";
+@import "~bootstrap/scss/_utilities";
+
 #app {
   font-family: 'Nanum Sqaure';
   position: absolute;

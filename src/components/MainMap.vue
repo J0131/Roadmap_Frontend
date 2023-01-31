@@ -3,7 +3,6 @@
     </div>
 </template>
 
-
 <script>
 import axios from 'axios'
 import OlLayerTile from 'ol/layer/Tile.js';
@@ -14,6 +13,14 @@ import {fromLonLat, toLonLat} from 'ol/proj.js';
 import {defaults} from 'ol/control.js';
 import eventBus from '../utils/eventBus'
 import Geocoder from 'ol-geocoder'
+import OlVectorSource from 'ol/source/Vector.js'
+import OlVectorLayer from 'ol/layer/Vector.js'
+import OlFeature from 'ol/Feature.js';
+import OlPoint from 'ol/geom/Point';
+import OlStyle from 'ol/style/Style.js'
+import OlIcon from 'ol/style/Icon.js'
+
+const EPSG_3857 = 'EPSG:3857';
 //import eventBus from '../main.js';
 
 export default {
@@ -25,10 +32,14 @@ export default {
         }
     },
     mounted() {
-        
+        const vectorSource = new OlVectorSource(EPSG_3857);
+        const vectorLayer = new OlVectorLayer({
+            source: vectorSource
+        })
+
         this.olMap = new OlMap({
             target: this.$refs.map,
-            controls:defaults({
+            controls: defaults({
                 attribution: false,
                 zoom:false,
                 rotate:false,
@@ -36,17 +47,20 @@ export default {
             layers: [
                 new OlLayerTile({
                     source: new OSM()
-                })
+                }),
+                vectorLayer
             ],
             view: new OlView({
                 center: fromLonLat([127.1388684, 37.4449168]),
-                zoom: 11
+                zoom: 10,
+                projection: EPSG_3857 // 생략 가능
             })
         })
 
         const getaddress = (lon, lat) => {
             this.getAddress(lon,lat)
         }
+
 
         this.olMap.on('click', function(e) {
             console.log(e.coordinate)
@@ -56,7 +70,23 @@ export default {
             const lat = lonLatArr[1]
             console.log(lat)
             getaddress(lon, lat)
+            drawMapIcon(e)
         })
+
+        function drawMapIcon(e) {
+            vectorSource.clear()
+            geocoder.getSource().clear()
+            const feature = new OlFeature({
+                geometry: new OlPoint(e.coordinate)
+            })
+            feature.setStyle(new OlStyle({
+                image: new OlIcon({
+                    scale: 0.7,
+                    src: '//cdn.rawgit.com/jonataswalker/map-utils/master/images/marker.png'
+                })
+            }))
+            vectorSource.addFeature(feature)
+        }
 
         // nominatim : 이름
         // osm : 자료이름
@@ -74,8 +104,15 @@ export default {
         // olMap에 geocoder를 추가해s준다
         // addcontrol은 openlayers에서 제공하는 메소드로, 커스텀 컨트롤을 주입하게해줌
 
-        geocoder.on('addresschosen', (evt) => {
-            that.setUiAddress(evt.address.details.name)
+        const setAddress = (str) => {
+            console.log(this)
+            this.setUiAddress(str)
+        }
+
+        geocoder.on('addresschosen', function(evt) {
+            console.log(this)
+            console.log(evt.address.details.name)
+            setAddress(evt.address.details.name)
         })
     },
     methods: {
@@ -97,6 +134,7 @@ export default {
                 })
         },
         setUiAddress(str){
+            console.log(this)
             this.$root.$refs.sideBar.address = str.split(', ').reverse().join(' ')
         }
     }
@@ -108,6 +146,7 @@ export default {
     width: 100%;
     height: 100%;
 
+    
     ::v-deep.ol-geocoder {
         position: absolute;
         right: 0;
@@ -156,4 +195,54 @@ export default {
         }
     }
 }
+</style>
+
+<style lang="scss">
+.ol-geocoder {
+        position: absolute;
+        right: 0;
+        padding: 10px;
+
+        button {
+            display: none;
+        }
+
+        input::placeholder {
+            color: white;
+            opacity: 0.7;
+        }
+
+        input, ul {
+            border-style: none;
+            width: 200px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
+            border-color: unset;
+            padding: 0 5px;
+            color: white;
+        }
+
+        ul {
+            margin-top: 5px;
+            padding: 0;
+            list-style: none;
+
+            li:hover {
+                background-color: rgba(0, 0, 0, 0.3);
+            }
+
+            li {
+                padding: 5px 10px;
+                font-size: 13px;
+
+                a {
+                    text-decoration: none;
+
+                    .gcd-road {
+                        color: white;
+                    }
+                }
+            }
+        }
+    }
 </style>
