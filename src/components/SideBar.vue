@@ -10,7 +10,7 @@
     >
       <div class="side-bar">
         <div class="title-area">
-          <BInput placeholder="맛집 이름을 입력해주세요."/>
+          <BInput v-model="title" placeholder="맛집 이름을 입력해주세요."/>
         </div>
         <div class="image-area">
           <div class="iw-file-input">
@@ -22,16 +22,23 @@
           <BInput 
               placeholder="위치 정보 직접 입력하기"
               :value="address"
+              v-model="address"
           />
         </div>
         <div class="rate-area">
-          <BFormRating/>
+          <BFormRating v-model="grade"/>
         </div>
         <div class="review-area">
           <BFormTextarea
             ref="textarea"
             placeholder="후기를 입력해주세요."
+            v-model="review"
           />
+        </div>
+        <div class="bottom-btn-area">
+        <BButton class="save-btn" @click="saveReview">
+          저장
+        </BButton>
         </div>
       </div>
     </VueResizable>
@@ -48,6 +55,7 @@
 <script>
 import VueResizable from 'vue-resizable';
 import eventBus from '../utils/eventBus';
+import axios from 'axios';
 //import eventBus from '../main.js';
 
 export default {
@@ -58,7 +66,10 @@ export default {
   data() {
     return {
         isVisibleSideBar: true,
-        address: undefined
+        address: undefined,
+        title: undefined,
+        grade: undefined,
+        review: undefined
     }
   },
   created(){
@@ -73,6 +84,16 @@ export default {
   methods: {
     showSideBar() {
         this.isVisibleSideBar = !this.isVisibleSideBar;
+    },
+    saveReview() {
+      console.log(this.address, this.title, this.grade, this.review)
+      axios.post('/api/review/saveReview', {
+        title: this.title,
+        address: this.address,
+        grade: this.grade,
+        review: this.review
+
+      })
     }
   },
 }
@@ -199,5 +220,17 @@ export default {
         width: 40px;
         height: 40px;
     }
+
+}
+
+.bottom-btn-area {
+      text-align: right;
+      padding-right: 10px;
+      
+      > .save-btn{
+        color: #fff;
+        font-weight: bold;
+        background-color: #ee9e06;
+      }
 }
 </style>
