@@ -49,6 +49,7 @@
     >
       <FontAwesomeIcon :icon="isVisibleSideBar ? 'angle-left' : 'angle-right'"/>
     </BButton>
+    <progress-spinner v-if="processingCount > 0"/>
   </div>
 </template>
 
@@ -56,12 +57,14 @@
 import VueResizable from 'vue-resizable';
 import eventBus from '../utils/eventBus';
 import axios from 'axios';
+import ProgressSpinner from './ProgressSpinner.vue';
 //import eventBus from '../main.js';
 
 export default {
   name: 'SideBar',
   components: {
-    VueResizable
+    VueResizable,
+    ProgressSpinner
   },
   data() {
     return {
@@ -69,7 +72,8 @@ export default {
         address: undefined,
         title: undefined,
         grade: undefined,
-        review: undefined
+        review: undefined,
+        processingCount: 0
     }
   },
   created(){
@@ -85,15 +89,43 @@ export default {
     showSideBar() {
         this.isVisibleSideBar = !this.isVisibleSideBar;
     },
-    saveReview() {
-      console.log(this.address, this.title, this.grade, this.review)
-      axios.post('/api/review/saveReview', {
-        title: this.title,
-        address: this.address,
-        grade: this.grade,
-        review: this.review
+    async saveReview() {
+      this.processingCount++;
+      try{  
+        await axios.post('/api/review/saveReview', {
+          title: this.title,
+          address: this.address,
+          grade: this.grade,
+          review: this.review
+        });
 
-      })
+        await this.$bvModal.msgBoxOk('저장 완료되었습니다.', {
+          hideHeader: true,
+          okTitle: '확인',
+          noFade: false,
+          size: 'sm',
+          buttonSize: 'sm',
+          okVariant: 'success',
+          headerClass: 'p-2 border-bottom-0',
+          footerClass: 'p-2 border-top-0',
+        });
+
+      } catch(e){
+          console.log(e.message);
+          await this.$bvModal.msgBoxOk(e.message, {
+            hideHeader: true,
+            okTitle: '확인',
+            noFade: false,
+            size: 'sm',
+            buttonSize: 'sm',
+            okVariant: 'danger',
+            headerClass: 'p-2 border-botton-0',
+            footerClass: 'p-2 border-top-0'
+          });
+          return await Promise.reject(e);
+      } finally {
+        this.processingCount--;
+      }
     }
   },
 }
