@@ -10,7 +10,7 @@
     >
       <div class="side-bar">
         <div class="title-area">
-          <BInput v-model="title" placeholder="맛집 이름을 입력해주세요."/>
+          <BInput v-model="title" placeholder="맛집 이름을 입력해주세요." :disabled="isDisabledInput"/>
         </div>
         <div class="image-area">
           <div class="iw-file-input">
@@ -21,23 +21,41 @@
           <FontAwesomeIcon icon="location-dot"/>
           <BInput 
               placeholder="위치 정보 직접 입력하기"
-              :value="address"
+              :disabled="isDisabledInput"
               v-model="address"
           />
         </div>
         <div class="rate-area">
-          <BFormRating v-model="grade"/>
+          <BFormRating 
+            v-model="grade"
+            :readonly="isDisabledInput"
+          />
         </div>
         <div class="review-area">
           <BFormTextarea
             ref="textarea"
             placeholder="후기를 입력해주세요."
+            :disabled="isDisabledInput"
             v-model="review"
           />
         </div>
         <div class="bottom-btn-area">
-        <BButton class="save-btn" @click="saveReview">
+        <BButton class="save-btn" @click="saveReview" v-if="!isDisabledInput">
           저장
+        </BButton>
+        <BButton
+          class="mr-2"
+          variant="success"
+          @click="$store.commit('setInputState',false)"
+          v-if="isDisabledInput">
+            수정하기
+        </BButton>
+        <BButton
+          variant="danger"
+          @click="removeReview"
+          v-if="isDisabledInput"
+        >
+          삭제하기
         </BButton>
         </div>
       </div>
@@ -58,6 +76,9 @@ import VueResizable from 'vue-resizable';
 import eventBus from '../utils/eventBus';
 import axios from 'axios';
 import ProgressSpinner from './ProgressSpinner.vue';
+import { process } from '@/common/Api.js';
+import { confirm, ok } from '@/common/Dialog.js';
+import { mapState } from 'vuex';
 //import eventBus from '../main.js';
 
 export default {
@@ -69,65 +90,104 @@ export default {
   data() {
     return {
         isVisibleSideBar: true,
-        address: undefined,
-        title: undefined,
-        grade: undefined,
-        review: undefined,
         processingCount: 0
     }
   },
-  created(){
-    this.$root.$refs.sideBar = this;
-  },
   mounted() {
         eventBus.$on('clickMap', data => {
-        console.log("버스 넘어옴",data)
         this.address = data
+        console.log("버스 넘어옴",this.address)
     })
   },
   methods: {
+    async getReviews() {
+      return await process(this, async() => {
+        const result = await axios.get('/api/review/getReviews')
+        return result.data
+      })
+    },
     showSideBar() {
         this.isVisibleSideBar = !this.isVisibleSideBar;
     },
-    async saveReview() {
-      this.processingCount++;
-      try{  
-        await axios.post('/api/review/saveReview', {
+    saveReview() {
+      process(this, async () => {
+        await axios.post('/api/review/saveReview',{
+          id: this.reviewId,
           title: this.title,
           address: this.address,
           grade: this.grade,
-          review: this.review
+          review: this.review,
+          lon: this.$store.state.curLon,
+          lat: this.$store.state.curLat,
         });
 
-        await this.$bvModal.msgBoxOk('저장 완료되었습니다.', {
-          hideHeader: true,
-          okTitle: '확인',
-          noFade: false,
-          size: 'sm',
-          buttonSize: 'sm',
-          okVariant: 'success',
-          headerClass: 'p-2 border-bottom-0',
-          footerClass: 'p-2 border-top-0',
-        });
+        await ok(this, '저장 완료되었습니다.');
 
-      } catch(e){
-          console.log(e.message);
-          await this.$bvModal.msgBoxOk(e.message, {
-            hideHeader: true,
-            okTitle: '확인',
-            noFade: false,
-            size: 'sm',
-            buttonSize: 'sm',
-            okVariant: 'danger',
-            headerClass: 'p-2 border-botton-0',
-            footerClass: 'p-2 border-top-0'
-          });
-          return await Promise.reject(e);
-      } finally {
-        this.processingCount--;
+        await this.$store.dispatch('setReviews')
+        this.$store.commit('setInputState', true)
+      })
+    },
+    removeReview() {
+      process(this, async() => {
+        const isConfirmed = await confirm(this, `'${this.title}' 리뷰를 삭제하시겠습니까?`)
+        if(!isConfirmed)
+          return
+        
+        await axios.delete('/api/review/deleteReview', {
+          data:{
+            id:this.reviewId
+          }
+        })
+
+        await ok(this, '삭제되었습니다.')
+
+        await this.$store.dispatch('setReviews')
+      })
+    },
+  },
+  computed: {
+    ...mapState({
+      reviewId: state => state.curReviewId,
+      curAddress: state => state.curAddress,
+      curGrade: state => state.curGrade,
+      curReview: state => state.curReview,
+      curTitle: state => state.curTitle,
+      isDisabledInput: state => state.isDisabledInput
+    }),
+    address: {
+      get() {
+        return this.curAddress
+      },
+      set(newVal) {
+        this.$store.commit('setCurAddress', newVal)
+      }
+    },
+    grade: {
+      get() {
+        return this.curGrade
+      },
+      set(newVal) {
+        this.$store.commit('setCurGrade', newVal)
+      }
+    },
+    review: {
+      get() {
+        return this.curReview
+      },
+      set(newVal) {
+        this.$store.commit('setCurReview', newVal)
+      }
+    },
+    title: {
+      get() {
+        return this.curTitle
+      },
+      set(newVal) {
+        this.$store.commit('setCurTitle', newVal)
       }
     }
-  },
+
+  }
 }
 </script>
 
