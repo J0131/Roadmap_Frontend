@@ -39,8 +39,7 @@ export default new Vuex.Store({
             if (state.reviews && reviews
                 && state.reviews.length !== reviews.length) {
                     const ids = state.reviews.map(re=>re.id)
-                    const curReview = reviews.find(review => 
-                        !ids.includes(review.id))
+                    const curReview = reviews.find(review => !ids.includes(review.id))
                     if(curReview)
                         state.curReviewId = curReview.id
             }
@@ -56,10 +55,6 @@ export default new Vuex.Store({
         setReview: (state, review) => {
             setReview(state, review)
         },
-        setLonLat: (state, {lon, lat}) => {
-            state.curLon = lon
-            state.curLat = lat
-        }
     },
     actions: {
         async setReviews({commit}) {

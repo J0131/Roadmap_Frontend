@@ -123,7 +123,7 @@ export default {
 
         await ok(this, '저장 완료되었습니다.');
 
-        await this.$store.dispatch('setReviews')
+        await this.$store.dispatch('setReviews', this)
         this.$store.commit('setInputState', true)
       })
     },

@@ -1,5 +1,15 @@
 <template>
     <div class="main-map" ref="map">
+        <div
+            class="overlay-tooltip"
+            ref="overlay"
+            v-show="isShowOverlay"
+        >
+            <div class="overlay-content">
+                {{selectedOverlayText}}
+                <BFormRating class="rating" v-model="selectedOverlayRating" readonly />
+            </div>
+        </div>
     </div>
 </template>
 
@@ -20,6 +30,7 @@ import OlPoint from 'ol/geom/Point';
 import OlStyle from 'ol/style/Style.js'
 import OlIcon from 'ol/style/Icon.js'
 import Overlay from 'ol/Overlay';
+
 
 const EPSG_3857 = 'EPSG:3857';
 const EPSG_4326 = 'EPSG:4326'
@@ -109,7 +120,7 @@ export default {
                         })
                         that.olMap.addOverlay(that.overlay)
                         that.olMap.getTargetElement().style.cursor = 'pointer'
-                    }
+                }
             })
         })
 
@@ -135,7 +146,7 @@ export default {
             })
             feature.setStyle(new OlStyle({
                 image: new OlIcon({
-                    scale: 0.8,
+                    scale: 0.7,
                     src: '//cdn.rawgit.com/jonataswalker/map-utils/master/images/marker.png'              
                 })
             }))
@@ -353,4 +364,37 @@ export default {
             }
         }
     }
+</style>
+
+<style lang="scss">
+
+.overlay-tooltip {
+    border-radius: 5px;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 5px 10px;
+    color: white;
+    text-align: center;
+
+    > .overlay-content::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: rgba(0,0,0,0.5) transparent transparent transparent;
+    }
+
+    .rating{
+        font-size: 15px;
+        background-color: transparent;
+        border: none;
+        padding: 0;
+        margin-top: 5%;
+        margin-bottom: 5%;
+        color: #ffdd00;
+        height: unset;
+    }
+}
 </style>
