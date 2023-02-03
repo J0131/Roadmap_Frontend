@@ -8,6 +8,9 @@ import {
     faAngleLeft,
     faAngleRight,
     faLocationDot,
+    faTimes,
+    faPlus,
+    faXmark
 } from "@fortawesome/free-solid-svg-icons"
 
 
@@ -15,6 +18,9 @@ import {
 library.add(faAngleLeft);
 library.add(faAngleRight);
 library.add(faLocationDot);
+library.add(faTimes);
+library.add(faPlus);
+library.add(faXmark);
 
 
 // fontawesome 아이콘을 Vue템플릿에서 사용할 수 있도록 등록

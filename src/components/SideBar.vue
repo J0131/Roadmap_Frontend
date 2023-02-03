@@ -9,56 +9,108 @@
         v-if="isVisibleSideBar"
     >
       <div class="side-bar">
-        <div class="title-area">
-          <BInput v-model="title" placeholder="맛집 이름을 입력해주세요." :disabled="isDisabledInput"/>
-        </div>
-        <div class="image-area">
-          <div class="iw-file-input">
-            사진을 업로드 해주세요
+          <div class="title-area">
+            <BInput v-model="title" placeholder="맛집 이름을 입력해주세요." :disabled="isDisabledInput"/>
+          </div>
+          <div class="image-area" v-if="!isDisabledInput">
+            <div class="file-input-wrapper"
+              @dragover="onDragOver"
+              @drop="onDrop"
+              v-if="!fileList.length"
+            >
+              <input
+                  class="file-input"
+                  type="file"
+                  accept="image/*"
+                  @change="onChangeFiles"
+                  multiple
+              >
+              사진을 업로드 해주세요
+            </div>
+            <div class="file-list" v-else>
+              <ul v-if="fileList.length > 0">
+                <li
+                    v-for="(file, idx) in fileList"
+                    :key = "idx"
+                >
+                    {{file.name}}
+                    <FontAwesomeIcon
+                      class="delete-file-icon"
+                      icon="xmark"
+                      @click="deleteFile(idx)"
+                    />
+                </li>
+              </ul>
+              <ul>
+                <li class="file-btn-area">
+                  <BButton
+                    size="sm"
+                    @click="deleteAllFile"
+                    class="file-delete-btn"
+                  >
+                    전체 삭제
+                    <FontAwesomeIcon icon="xmark"/>
+                  </BButton>
+                  <BButton
+                    size="sm"
+                    class="file-add-btn"
+                  >
+                    추가
+                    <FontAwesomeIcon icon="plus"/>
+                    <input
+                      class="file-input"
+                      type="file"
+                      accept="image/*"
+                      @change="onChangeFiles"
+                      multiple
+                    />
+                  </BButton>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="location-info-area">
+            <FontAwesomeIcon icon="location-dot"/>
+            <BInput 
+                placeholder="위치 정보 직접 입력하기"
+                :disabled="isDisabledInput"
+                v-model="address"
+            />
+          </div>
+          <div class="rate-area">
+            <BFormRating 
+              v-model="grade"
+              :readonly="isDisabledInput"
+            />
+          </div>
+          <div class="review-area">
+            <BFormTextarea
+              ref="textarea"
+              placeholder="후기를 입력해주세요."
+              :disabled="isDisabledInput"
+              v-model="review"
+            />
+          </div>
+          <div class="bottom-btn-area">
+            <BButton class="save-btn" @click="saveReview" v-if="!isDisabledInput">
+              저장
+            </BButton>
+            <BButton
+              class="mr-2"
+              variant="success"
+              @click="$store.commit('setInputState',false)"
+              v-if="isDisabledInput">
+                수정하기
+            </BButton>
+            <BButton
+              variant="danger"
+              @click="removeReview"
+              v-if="isDisabledInput"
+            >
+              삭제하기
+            </BButton>
           </div>
         </div>
-        <div class="location-info-area">
-          <FontAwesomeIcon icon="location-dot"/>
-          <BInput 
-              placeholder="위치 정보 직접 입력하기"
-              :disabled="isDisabledInput"
-              v-model="address"
-          />
-        </div>
-        <div class="rate-area">
-          <BFormRating 
-            v-model="grade"
-            :readonly="isDisabledInput"
-          />
-        </div>
-        <div class="review-area">
-          <BFormTextarea
-            ref="textarea"
-            placeholder="후기를 입력해주세요."
-            :disabled="isDisabledInput"
-            v-model="review"
-          />
-        </div>
-        <div class="bottom-btn-area">
-        <BButton class="save-btn" @click="saveReview" v-if="!isDisabledInput">
-          저장
-        </BButton>
-        <BButton
-          class="mr-2"
-          variant="success"
-          @click="$store.commit('setInputState',false)"
-          v-if="isDisabledInput">
-            수정하기
-        </BButton>
-        <BButton
-          variant="danger"
-          @click="removeReview"
-          v-if="isDisabledInput"
-        >
-          삭제하기
-        </BButton>
-        </div>
-      </div>
     </VueResizable>
     <BButton
         class="side-bar-active-btn"
@@ -90,7 +142,8 @@ export default {
   data() {
     return {
         isVisibleSideBar: true,
-        processingCount: 0
+        processingCount: 0,
+        fileList: []
     }
   },
   mounted() {
@@ -100,6 +153,21 @@ export default {
     })
   },
   methods: {
+    deleteFile(idx){
+      this.fileList.splice(idx,1)
+    },
+    deleteAllFile(){
+      this.fileList = []
+    },
+    onChangeFiles(e) {
+      this.fileList.push(...e.target.files)
+    },
+    onDrop(e) {
+      this.fileList.push(...e.dataTransfer.files)
+    },
+    onDragOver(e) {
+      e.preventDefault()
+    },
     async getReviews() {
       return await process(this, async() => {
         const result = await axios.get('/api/review/getReviews')
@@ -223,6 +291,74 @@ export default {
           > .image-area {
             padding: 0 10px;
 
+            > .file-input-wrapper, .file-list {
+              position: relative;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              font-size: 1.3rem;
+              border: 5px dashed rgb(255, 255, 255, 0.5);
+              border-radius: 10px;
+              height: 250px;
+              background-color: rgb(255, 255, 255, 0.5);
+              overflow-y: auto;
+              flex-direction: column;
+
+              > ul {
+                padding: 0 10px;
+
+                > li {
+                  list-style: none;
+                  font-size: 1.1rem;
+                  word-break: break-all;
+
+                  > .delete-file-icon {
+                    font-size: 1.5rem;
+                    cursor: pointer;
+                    padding: 10px 0 0 5px;
+                  }
+                }
+
+                > .file-btn-area {
+                  display: flex;
+                  padding-top: 10px;
+
+                  > .file-delete-btn {
+                    display: flex;
+                    align-items: center;
+                    font-size: 0.7rem;
+                    margin-right: 5px;
+                  }
+
+                  > .file-add-btn {
+                    display: flex;
+                    align-items: center;
+                    font-size: 0.7rem;
+                    position: relative;
+
+                    > .file-input {
+                      cursor: pointer;
+                      position: absolute;
+                      right: 0;
+                      top: 0;
+                      bottom: 0;
+                      left: 0;
+                      opacity: 0;
+                    }
+                  }
+                }
+              }
+              > .file-input {
+                cursor: pointer;
+                position: absolute;
+                right: 0;
+                top: 0;
+                bottom: 0;
+                left: 0;
+                opacity: 0;
+              }
+            }
+
             > .iw-file-input {
               display: flex;
               justify-content: center;
@@ -325,4 +461,5 @@ export default {
         background-color: #ee9e06;
       }
 }
+
 </style>
